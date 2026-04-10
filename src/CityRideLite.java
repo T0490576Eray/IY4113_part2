@@ -6,8 +6,7 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 
 
-class Journey
-{
+class Journey{
     private int id;
     private String date;
     private int fromZone;
@@ -197,6 +196,70 @@ public class CityRideLite{
         }
     }
 
+    private Journey findJourneyWId(int id){
+        for (Journey j : journeys) {
+            if (j.getId() == id) {
+                return j;
+            }
+        }
+        return null;
+    }
+
+    private CityRideDataset.TimeBand getBandFromInput(String bandInput){
+        if (bandInput.equals("peak"))  {
+            return CityRideDataset.TimeBand.PEAK;
+        }
+        else if (bandInput.equals("off_peak")){
+            return CityRideDataset.TimeBand.OFF_PEAK;
+        }
+        return null;
+    }
+
+    private CityRideDataset.PassengerType getTypeFromInput(String typeInput){
+        if (typeInput.equals("adult")){
+            return CityRideDataset.PassengerType.ADULT;
+        }
+        else if (typeInput.equals("student")){
+            return CityRideDataset.PassengerType.STUDENT;
+        }
+        else if (typeInput.equals("child")){
+            return CityRideDataset.PassengerType.CHILD;
+        }
+        else if (typeInput.equals("senior_citizen")){
+            return CityRideDataset.PassengerType.SENIOR_CITIZEN;
+        }
+        return null;
+    }
+
+    private BigDecimal calculateFinalFare(int from,int to,CityRideDataset.TimeBand band,CityRideDataset.PassengerType type){
+        BigDecimal baseFare = CityRideDataset.getBaseFare(from, to, band);
+        BigDecimal discountRate = CityRideDataset.DISCOUNT_RATE.get(type);
+
+        BigDecimal discountedFare = baseFare.subtract(baseFare.multiply(discountRate));
+        discountedFare = discountedFare.setScale(2, RoundingMode.HALF_UP);
+
+        return applyCap(discountedFare, type);
+    }
+
+    private void subtractTotalsAndCounts(String type,BigDecimal fare){
+        if (type.equals("ADULT")) {
+            adultTotal = adultTotal.subtract(fare);
+            adultCount--;
+        }
+        else if (type.equals("STUDENT")) {
+            studentTotal = studentTotal.subtract(fare);
+            studentCount--;
+        }
+        else if (type.equals("CHILD")) {
+            childTotal = childTotal.subtract(fare);
+            childCount--;
+        }
+        else {
+            seniorTotal = seniorTotal.subtract(fare);
+            seniorCount--;
+        }
+    }
+
     private void addJourney(){
         try {
             System.out.print("Date (DD/MM): ");
@@ -217,47 +280,23 @@ public class CityRideLite{
             System.out.print("Band (peak/off_peak): ");
             String bandInput =sc.nextLine().toLowerCase();
 
-            CityRideDataset.TimeBand band;
+            CityRideDataset.TimeBand band = getBandFromInput(bandInput);
 
-            if (bandInput.equals("peak"))  {
-                band = CityRideDataset.TimeBand.PEAK;
-            }
-            else if (bandInput.equals("off_peak")){
-                band = CityRideDataset.TimeBand.OFF_PEAK;
-            }
-            else{
+            if (band == null){
                 System.out.println("Invalid band.");
                 return;}
 
             System.out.print("Type (adult/student/child/senior_citizen): ");
             String typeInput = sc.nextLine().toLowerCase();
 
-            CityRideDataset.PassengerType type;
+            CityRideDataset.PassengerType type = getTypeFromInput(typeInput);
 
-            if (typeInput.equals("adult")){
-                type =CityRideDataset.PassengerType.ADULT;
-            }
-            else if (typeInput.equals("student")){
-                type =CityRideDataset.PassengerType.STUDENT;
-            }
-            else if (typeInput.equals("child")){
-                type =CityRideDataset.PassengerType.CHILD;
-            }
-            else if (typeInput.equals("senior_citizen")){
-                type =CityRideDataset.PassengerType.SENIOR_CITIZEN;
-            }
-            else {
+            if (type == null) {
                 System.out.println("Invalid type.");
                 return;
             }
 
-            BigDecimal baseFare = CityRideDataset.getBaseFare(from, to, band);
-            BigDecimal discountRate = CityRideDataset.DISCOUNT_RATE.get(type);
-
-            BigDecimal discountedFare = baseFare.subtract(baseFare.multiply(discountRate));
-            discountedFare = discountedFare.setScale(2, RoundingMode.HALF_UP);
-
-            BigDecimal chargedFare = applyCap(discountedFare, type);
+            BigDecimal chargedFare = calculateFinalFare(from, to, band, type);
 
             Journey j = new Journey(idCounter, date, from, to, band.name(), type.name(), chargedFare);
             journeys.add(j);
@@ -369,36 +408,14 @@ public class CityRideLite{
             System.out.print("Enter ID: ");
             int id = Integer.parseInt(sc.nextLine());
 
-            Journey found = null;
-
-            for (Journey j : journeys) {
-                if (j.getId() == id) {
-                    found = j;
-                    break;
-                }
-            }
+            Journey found = findJourneyWId(id);
 
             if (found == null) {
                 System.out.println("Not found.");
                 return;
             }
 
-            if (found.getType().equals("ADULT")) {
-                adultTotal = adultTotal.subtract(found.getFare());
-                adultCount--;
-            }
-            else if (found.getType().equals("STUDENT")) {
-                studentTotal = studentTotal.subtract(found.getFare());
-                studentCount--;
-            }
-            else if (found.getType().equals("CHILD")) {
-                childTotal = childTotal.subtract(found.getFare());
-                childCount--;
-            }
-            else {
-                seniorTotal = seniorTotal.subtract(found.getFare());
-                seniorCount--;
-            }
+            subtractTotalsAndCounts(found.getType(), found.getFare());
 
             journeys.remove(found);
             System.out.println("Journey removed.");
@@ -413,36 +430,14 @@ public class CityRideLite{
             System.out.print("Enter ID to edit: ");
             int id = Integer.parseInt(sc.nextLine());
 
-            Journey found = null;
-
-            for (Journey j : journeys) {
-                if (j.getId() == id) {
-                    found = j;
-                    break;
-                }
-            }
+            Journey found = findJourneyWId(id);
 
             if (found == null) {
                 System.out.println("Journey not found.");
                 return;
             }
 
-            if (found.getType().equals("ADULT")) {
-                adultTotal = adultTotal.subtract(found.getFare());
-                adultCount--;
-            }
-            else if (found.getType().equals("STUDENT")) {
-                studentTotal = studentTotal.subtract(found.getFare());
-                studentCount--;
-            }
-            else if (found.getType().equals("CHILD")) {
-                childTotal = childTotal.subtract(found.getFare());
-                childCount--;
-            }
-            else {
-                seniorTotal = seniorTotal.subtract(found.getFare());
-                seniorCount--;
-            }
+            subtractTotalsAndCounts(found.getType(), found.getFare());
 
             System.out.print("New date (DD/MM): ");
             String date = sc.nextLine();
@@ -462,15 +457,9 @@ public class CityRideLite{
             System.out.print("New band (peak/off_peak): ");
             String bandInput = sc.nextLine().toLowerCase();
 
-            CityRideDataset.TimeBand band;
+            CityRideDataset.TimeBand band = getBandFromInput(bandInput);
 
-            if (bandInput.equals("peak")) {
-                band = CityRideDataset.TimeBand.PEAK;
-            }
-            else if (bandInput.equals("off_peak")) {
-                band = CityRideDataset.TimeBand.OFF_PEAK;
-            }
-            else {
+            if (band == null) {
                 System.out.println("Invalid band.");
                 return;
             }
@@ -478,32 +467,14 @@ public class CityRideLite{
             System.out.print("New type (adult/student/child/senior_citizen): ");
             String typeInput = sc.nextLine().toLowerCase();
 
-            CityRideDataset.PassengerType type;
+            CityRideDataset.PassengerType type = getTypeFromInput(typeInput);
 
-            if (typeInput.equals("adult")) {
-                type = CityRideDataset.PassengerType.ADULT;
-            }
-            else if (typeInput.equals("student")) {
-                type = CityRideDataset.PassengerType.STUDENT;
-            }
-            else if (typeInput.equals("child")) {
-                type = CityRideDataset.PassengerType.CHILD;
-            }
-            else if (typeInput.equals("senior_citizen")) {
-                type = CityRideDataset.PassengerType.SENIOR_CITIZEN;
-            }
-            else {
+            if (type == null) {
                 System.out.println("Invalid type.");
                 return;
             }
 
-            BigDecimal baseFare = CityRideDataset.getBaseFare(from, to, band);
-            BigDecimal discountRate = CityRideDataset.DISCOUNT_RATE.get(type);
-
-            BigDecimal discountedFare = baseFare.subtract(baseFare.multiply(discountRate));
-            discountedFare = discountedFare.setScale(2, RoundingMode.HALF_UP);
-
-            BigDecimal chargedFare = applyCap(discountedFare, type);
+            BigDecimal chargedFare = calculateFinalFare(from, to, band, type);
 
             found.setDate(date);
             found.setFromZone(from);

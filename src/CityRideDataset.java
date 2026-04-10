@@ -3,7 +3,7 @@ import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 
-final class CityRideDataset {
+final class CityRideDataset  {
 
     private CityRideDataset() {}
 
