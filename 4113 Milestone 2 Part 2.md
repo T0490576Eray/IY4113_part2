@@ -1,15 +1,15 @@
-# IY4113 Part 2 Milestone 3
+# IY4113 Part 2 Milestone 2
 
-| Assessment Details | Please Complete All Details |
-| ------------------ | --------------------------- |
-| Group              | A                           |
-| Module Title       | IY4113                      |
-| Assessment Type    | Milestone 2                 |
-| Module Tutor Name  | Jonathan Shore              |
-| Student ID Number  | P490576                     |
-| Date of Submission | 6/4/2026                    |
-| Word Count         | 2120                        |
-| GitHub Link        |                             |
+| Assessment Details | Please Complete All Details                   |
+| ------------------ | --------------------------------------------- |
+| Group              | A                                             |
+| Module Title       | IY4113                                        |
+| Assessment Type    | Milestone 2                                   |
+| Module Tutor Name  | Jonathan Shore                                |
+| Student ID Number  | P490576                                       |
+| Date of Submission | 6/4/2026                                      |
+| Word Count         | 2120                                          |
+| GitHub Link        | https://github.com/T0490576Eray/IY4113_part2# |
 
 - [x] *I confirm that this assignment is my own work. Where I have referred to academic sources, I have provided in-text citations and included the sources in
   the final reference list.*
