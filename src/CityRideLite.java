@@ -814,6 +814,17 @@ public class CityRideLite{
         return mostExpensive;
     }
 
+    private BigDecimal getUncappedTotal(){
+        BigDecimal total = BigDecimal.ZERO;
+
+        for (Journey j : journeys){
+            BigDecimal uncappedFare = j.getBaseFare().subtract(j.getDiscountApplied());
+            total = total.add(uncappedFare);
+        }
+
+        return total.setScale(2, RoundingMode.HALF_UP);
+    }
+
     private void showSummary() {
         BigDecimal total = adultTotal.add(studentTotal).add(childTotal).add(seniorTotal);
         int totalCount = adultCount + studentCount + childCount + seniorCount;
@@ -826,6 +837,37 @@ public class CityRideLite{
 
         Journey mostExpensive = getMostExpensiveJourney();
 
+        int peakCount = 0;
+        int offPeakCount = 0;
+        int capReachedCount = 0;
+
+        HashMap<String, Integer> zonePairCounts = new HashMap<String, Integer>();
+
+        for (Journey j : journeys){
+            if (j.getBand().equals("PEAK")){
+                peakCount++;
+            }
+            else{
+                offPeakCount++;
+            }
+
+            if (j.isCapApplied()){
+                capReachedCount++;
+            }
+
+            String pair = j.getFromZone() + "-" + j.getToZone();
+
+            if (zonePairCounts.containsKey(pair)){
+                zonePairCounts.put(pair, zonePairCounts.get(pair) + 1);
+            }
+            else{
+                zonePairCounts.put(pair, 1);
+            }
+        }
+
+        BigDecimal uncappedTotal = getUncappedTotal();
+        BigDecimal savings = uncappedTotal.subtract(total).setScale(2, RoundingMode.HALF_UP);
+
         System.out.println("\n--- Summary ---");
         System.out.println("Total journeys: " + totalCount);
         System.out.println("Total income: £" + total.setScale(2, RoundingMode.HALF_UP));
@@ -834,6 +876,15 @@ public class CityRideLite{
         System.out.println("Student journeys: " +studentCount + " | £" +studentTotal.setScale(2, RoundingMode.HALF_UP));
         System.out.println("Child journeys: " +childCount + " | £" +childTotal.setScale(2, RoundingMode.HALF_UP));
         System.out.println("Senior journeys: " +seniorCount + " | £" +seniorTotal.setScale(2, RoundingMode.HALF_UP));
+        System.out.println("Peak journeys: " + peakCount);
+        System.out.println("Off-peak journeys: " + offPeakCount);
+        System.out.println("Journeys where cap affected fare: " + capReachedCount);
+        System.out.println("Savings compared to uncapped fares: £" + savings);
+
+        System.out.println("Zone pair counts:");
+        for (Map.Entry<String, Integer> entry : zonePairCounts.entrySet()){
+            System.out.println(entry.getKey() + " -> " + entry.getValue());
+        }
 
         if (mostExpensive != null){
             System.out.println("Most expensive journey: ID " + mostExpensive.getId() +
@@ -859,6 +910,37 @@ public class CityRideLite{
 
             Journey mostExpensive = getMostExpensiveJourney();
 
+            int peakCount = 0;
+            int offPeakCount = 0;
+            int capReachedCount = 0;
+
+            HashMap<String, Integer> zonePairCounts = new HashMap<String, Integer>();
+
+            for (Journey j : journeys){
+                if (j.getBand().equals("PEAK")){
+                    peakCount++;
+                }
+                else{
+                    offPeakCount++;
+                }
+
+                if (j.isCapApplied()){
+                    capReachedCount++;
+                }
+
+                String pair = j.getFromZone() + "-" + j.getToZone();
+
+                if (zonePairCounts.containsKey(pair)){
+                    zonePairCounts.put(pair, zonePairCounts.get(pair) + 1);
+                }
+                else{
+                    zonePairCounts.put(pair, 1);
+                }
+            }
+
+            BigDecimal uncappedTotal = getUncappedTotal();
+            BigDecimal savings = uncappedTotal.subtract(total).setScale(2, RoundingMode.HALF_UP);
+
             PrintWriter writer = new PrintWriter(new FileWriter(fileName));
 
             writer.println("--- CityRide Summary ---");
@@ -876,6 +958,15 @@ public class CityRideLite{
             writer.println("Student journeys: " +studentCount + " | £" +studentTotal.setScale(2, RoundingMode.HALF_UP));
             writer.println("Child journeys: " +childCount + " | £" +childTotal.setScale(2, RoundingMode.HALF_UP));
             writer.println("Senior journeys: " +seniorCount + " | £" +seniorTotal.setScale(2, RoundingMode.HALF_UP));
+            writer.println("Peak journeys: " + peakCount);
+            writer.println("Off-peak journeys: " + offPeakCount);
+            writer.println("Journeys where cap affected fare: " + capReachedCount);
+            writer.println("Savings compared to uncapped fares: £" + savings);
+
+            writer.println("Zone pair counts:");
+            for (Map.Entry<String, Integer> entry : zonePairCounts.entrySet()){
+                writer.println(entry.getKey() + " -> " + entry.getValue());
+            }
 
             if (mostExpensive != null){
                 writer.println("Most expensive journey: ID " + mostExpensive.getId() +
