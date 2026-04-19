@@ -504,6 +504,7 @@ public class CityRideLite{
         return dailyCaps.get(type.name());
     }
 
+    // apply daily cap if limit is reached
     private BigDecimal applyCap(BigDecimal price, CityRideDataset.PassengerType type) {
         BigDecimal cap = getCap(type);
         BigDecimal current = getTotal(type);
@@ -636,11 +637,13 @@ public class CityRideLite{
                 return;
             }
 
+            // calculate fare with discount
             BigDecimal baseFare = CityRideDataset.getBaseFare(from, to, band);
             BigDecimal discountRate = getDiscountRate(type);
             BigDecimal discountApplied = baseFare.multiply(discountRate).setScale(2, RoundingMode.HALF_UP);
             BigDecimal discountedFare = baseFare.subtract(discountApplied).setScale(2, RoundingMode.HALF_UP);
 
+            // apply cap after discount
             BigDecimal chargedFare = applyCap(discountedFare, type);
             boolean capApplied = chargedFare.compareTo(discountedFare) < 0;
 
@@ -814,6 +817,7 @@ public class CityRideLite{
         return mostExpensive;
     }
 
+    // calculate total without daily cap (for savings)
     private BigDecimal getUncappedTotal(){
         BigDecimal total = BigDecimal.ZERO;
 
@@ -843,6 +847,7 @@ public class CityRideLite{
 
         HashMap<String, Integer> zonePairCounts = new HashMap<String, Integer>();
 
+        // count peak, off-peak and zone pairs
         for (Journey j : journeys){
             if (j.getBand().equals("PEAK")){
                 peakCount++;
@@ -916,6 +921,7 @@ public class CityRideLite{
 
             HashMap<String, Integer> zonePairCounts = new HashMap<String, Integer>();
 
+            // prepare same stats for export
             for (Journey j : journeys){
                 if (j.getBand().equals("PEAK")){
                     peakCount++;
